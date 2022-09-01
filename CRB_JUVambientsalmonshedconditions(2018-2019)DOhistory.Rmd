@@ -1,0 +1,220 @@
+---
+title: "Dissolve Oxygen Timeseries, Juvenile Exposure Study, HOBOlogger Data Import"
+output:
+ html_document:
+    df_print: paged
+    code_folding: hide
+    toc: TRUE
+    toc_depth: 4
+    toc_float: true
+    theme: cerulean
+    highlight: haddock
+    smart: false
+editor_options: 
+  chunk_output_type: inline
+---
+
+
+Hello World
+
+Author: OA Lab, NWFSC
+Title: Salmon Shed Tanks - Dissolved Oxygen
+Date: 2018-2019 (R document March 2021)
+
+
+# Version Check
+```{r 0.1 Version Check , echo=FALSE, results=FALSE, message=FALSE, warning=FALSE}
+#*********************************
+## Version Check
+#********************************* 
+R.version
+
+```
+
+
+
+# Libraries
+```{r 0.0 Libraries , echo=FALSE, results=FALSE, message=FALSE, warning=FALSE}
+#*********************************
+##Libraries
+#********************************* 
+library(here)
+library(stringr)
+library(data.table)
+library(tidyverse)
+library(plyr)
+library(nlme)
+library(tidyr)
+library(dbplyr)
+library(dplyr)
+library(purrr)
+library(wql)
+library(lubridate)
+library(tibbletime)
+library(arsenal)
+library(compareDF)
+library(metacsv)
+#for graphing
+library(ggplot2)
+library(ggfortify)
+library(stringr)
+library(nlme)
+library(RColorBrewer)
+library(patchwork)
+#statistical analysis
+library(gdata)
+library(rsq)
+library(doBy)
+#Rnotebooks 
+library(gridExtra)
+library(kableExtra)
+
+```
+
+
+
+
+# 1.) Setting Working Directory
+```{r 1.) Setting Working Directory, echo=FALSE, results=FALSE, message=FALSE, warning=FALSE }
+#*********************************
+## 1.) Setting Working Directory
+#*********************************
+
+#set working directory to the correct folder
+# setwd("/Users/katherinerovinski/GIT/NWFSC.MUK_DGNjuvenile.tanks")
+# want to use here but how do you change global settings for strings set to false?
+# 
+# setwd("/Users/katherinerovinski/GIT/NWFSC.MUK_DGNjuvenile.tanks/HOBO Data/logger_DOprobe")
+setwd("/Users/katherinerovinski/GIT/NWFSC.MUK_DGNjuvenile.tanks/02_processedData")
+
+
+```
+
+
+
+# 2.) Creating the Dataframe
+```{r 2.) Creating the Dataframe, echo=FALSE, message=FALSE, warning=FALSE}
+
+#*********************************
+## 2.) Creating the initial Dataframes
+#*********************************
+
+
+# loggerDOprobe <- read_csv(here("02_processedData", "CRB_JUV_AmbientConditions_2018_to_2019loggerDO.csv"))
+
+loggerDOprobe <- read.csv( file = "CRB_JUV_AmbientConditions_2018_to_2019loggerDO.csv", stringsAsFactors = FALSE)
+
+
+
+```
+
+
+
+
+# 3.) Creating dateTime objects 
+```{r 3.) Creating dateTime objects, echo=FALSE, message=FALSE, warning=FALSE }
+#*********************************
+## 3.) Creating dateTime objects  
+#*********************************
+
+
+loggerDOprobe$ObservationDate <- ""
+loggerDOprobe$ObservationDate <- as.POSIXct(loggerDOprobe$dateTime, tz = "UTC", "%m/%d/%y %H:%M")
+
+
+```
+
+
+
+
+# 4.) DO probe timeseries
+```{r DO probe timeseries}
+
+
+
+ ggplot(loggerDOprobe, aes(ObservationDate, DOconcentration_mg.L)) +
+  geom_point() +
+  ylim(7,15) +
+  ggtitle("DO Concentration: HOBOlogger Probe(20454092), Salmon Shed Ambient Water")
+
+
+```
+
+
+# 5.) Creating Dissolved Oxygen Percent
+
+```{r}
+
+loggerDOprobe$percentDOassumpt <- ""
+loggerDOprobe$assumedSatDOmg <- ""
+loggerDOprobe$percentDO <- ""
+loggerDOprobe$obseveredSatDOmg <- ""
+loggerDOprobe$actualDOmg <- ""
+
+loggerDOprobe$actualDOmg <- as.numeric(loggerDOprobe$DOconcentration_mg.L)
+loggerDOprobe$SalinityConstant <- 29.5
+
+loggerDOprobe$percentDOassumpt <- as.numeric(loggerDOprobe$percentDOassumpt)
+loggerDOprobe$assumedSatDOmg <- as.numeric(loggerDOprobe$assumedSatDOmg)
+loggerDOprobe$percentDO <- as.numeric(loggerDOprobe$percentDO)
+loggerDOprobe$obseveredSatDOmg <- as.numeric(loggerDOprobe$obseveredSatDOmg)
+
+#|- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - |
+
+#Correct Temperature
+# is probe temperature
+
+#Salinity Constant
+
+#|- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - |
+
+# Numeric Corrections to DO value
+loggerDOprobe$Value <- as.numeric(loggerDOprobe$Value)
+
+loggerDOprobe$assumedSatDOmg <- oxySol(loggerDOprobe$Temp, 
+                                  loggerDOprobe$SalinityConstant)
+
+loggerDOprobe$percentDOassumpt <- loggerDOprobe$Value / loggerDOprobe$assumedSatDOmg
+
+loggerDOprobe$obseveredSatDOmg <- oxySol(loggerDOprobe$Temp, loggerDOprobe$SalinityConstant)
+
+loggerDOprobe$percentDO <- loggerDOprobe$Value / loggerDOprobe$assumedSatDOmg
+
+loggerDOprobe$actualDOmg <- loggerDOprobe$percentDO * loggerDOprobe$obseveredSatDOmg
+
+```
+
+
+
+
+
+
+
+```{r}
+#**************E*N*D*************# 
+#*********************************
+## END OF SCRIPT | END OF DOCUMENT 
+#*********************************
+```
+
+
+## END OF SCRIPT | END OF DOCUMENT
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
